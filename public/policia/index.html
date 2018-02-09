@@ -1,0 +1,123 @@
+
+
+<html lang="en">
+    <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <meta http-equiv="X-UA-Compatible" content="ie=edge">
+       <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+       <title>Administració Policial</title>
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+       <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
+    </head>
+    <body>
+       <section class="hero is-fullheight" style="background-color:#71c7ec">
+          <div class="columns">
+             <div class="column is-half is-offset-one-quarter">
+                <div class="video-container">
+                   <video id="video" width="100%" height="500" autoplay></video>
+                </div>
+             </div>
+          </div>
+          <div class="notification is-warning" id="matricula"></div>
+          <a class="button is-danger" id="snapshot">Fer foto</a>
+          <br/>
+          <canvas id = "canvas" width="300" height="300"></canvas>
+          <a class="button is-success" id="verificar">Verificar</a>
+       </section>
+
+       <script src="/socket.io/socket.io.js"></script>
+       <script>
+         var socket = io.connect('http://localhost:80');
+
+          $( "#verificar" ).click(function() {
+            socket.emit('image', { src: document.getElementById('canvas').toDataURL() });
+          });
+          socket.on('matricula', function (data) {
+            document.getElementById('matricula').innerHTML = "<h1>"+data.matricula+"</h1><br/><h2>"+data.autoritzat+"</h2>"
+          });
+          socket.on('processant', function (data) {
+            document.getElementById('matricula').innerText = "Processant matrícula..."
+          });
+
+          $(function(){
+            var video = $('video')[0];
+            var canvas = $('canvas')[0];
+          
+            var getCameraAccess = function(){
+              
+              // Normalize the various vendor prefixed versions of getUserMedia.
+          navigator.getUserMedia = (navigator.getUserMedia ||
+                                    navigator.webkitGetUserMedia ||
+                                    navigator.mozGetUserMedia || 
+                                    navigator.msGetUserMedia);
+          
+          // Check that the browser supports getUserMedia.
+          // If it doesn't show an alert, otherwise continue.
+          if (navigator.getUserMedia) {
+            // Request the camera.
+            navigator.getUserMedia(
+              // Constraints
+              {
+                video: true
+              },
+          
+              // Success Callback
+              function(localMediaStream) {
+                // Get a reference to the video element on the page.
+                var vid = document.getElementById('video');
+                
+                // Create an object URL for the video stream and use this 
+                // to set the video source.
+                vid.src = window.URL.createObjectURL(localMediaStream);
+              },
+          
+              // Error Callback
+              function(err) {
+                // Log the error to the console.
+                console.log('The following error occurred when trying to use getUserMedia: ' + err);
+              }
+            );
+          
+          } else {
+            alert('Sorry, your browser does not support getUserMedia');
+          }
+            };
+          
+            var takeSnapshot = function(){
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+            };
+          
+             // when the start button is clicked, take a snapshot
+            $('#snapshot').on('click', function(){
+                takeSnapshot();
+            });
+          
+            window.onload = function() {
+              getCameraAccess();
+            };
+
+            function downloadCanvas(link, canvasId, filename) {
+              /*console.log(document.getElementById(canvasId).toDataURL());
+              link.href = document.getElementById(canvasId).toDataURL();
+              link.download = filename;
+              console.log(link.href);*/
+            }
+
+            /** 
+            * The event handler for the link's onclick event. We give THIS as a
+            * parameter (=the link element), ID of the canvas and a filename.
+            */
+            /*document.getElementById('verificar').addEventListener('click', function() {
+              downloadCanvas(this, 'canvas', 'matricula.png');
+            }, false);*/
+
+          });
+                      
+       </script>
+    </body>
+ </html>
+ 
+ 
